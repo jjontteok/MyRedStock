@@ -18,6 +18,24 @@ function setBriefingTime_(value) {
 }
 
 function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'setup') {
+    setupRedStockTrigger();
+    return jsonp_(e, {
+      ok: true,
+      action: 'setup',
+      diagnostics: getDiagnostics_(),
+    });
+  }
+
+  if (e && e.parameter && e.parameter.action === 'check') {
+    checkAndSendKakao();
+    return jsonp_(e, {
+      ok: true,
+      action: 'check',
+      diagnostics: getDiagnostics_(),
+    });
+  }
+
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME)
     || SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
   const values = sheet.getRange(1, 1, Math.max(sheet.getLastRow(), 1), 1)
@@ -26,33 +44,12 @@ function doGet(e) {
     .map(value => String(value).trim())
     .filter(value => value && !value.startsWith('#'));
 
-  const callback = e && e.parameter && e.parameter.callback;
-  const props = PropertiesService.getScriptProperties();
-  const triggerCount = ScriptApp.getProjectTriggers()
-    .filter(trigger => trigger.getHandlerFunction() === 'checkAndSendKakao')
-    .length;
-  const body = JSON.stringify({
+  return jsonp_(e, {
     ok: true,
     stocks: values,
     briefingTime: getBriefingTime_(),
-    diagnostics: {
-      hasKakaoRestApiKey: Boolean(props.getProperty('KAKAO_REST_API_KEY')),
-      hasKakaoRefreshToken: Boolean(props.getProperty('KAKAO_REFRESH_TOKEN')),
-      triggerCount,
-      lastSentKey: props.getProperty('LAST_SENT_KEY') || '',
-      lastCheckedAt: props.getProperty('LAST_CHECKED_AT') || '',
-      lastError: props.getProperty('LAST_ERROR') || '',
-    },
+    diagnostics: getDiagnostics_(),
   });
-  if (callback) {
-    return ContentService
-      .createTextOutput(`${callback}(${body});`)
-      .setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-
-  return ContentService
-    .createTextOutput(body)
-    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -85,6 +82,34 @@ function setupRedStockTrigger() {
     .timeBased()
     .everyMinutes(1)
     .create();
+}
+
+function getDiagnostics_() {
+  const props = PropertiesService.getScriptProperties();
+  const triggerCount = ScriptApp.getProjectTriggers()
+    .filter(trigger => trigger.getHandlerFunction() === 'checkAndSendKakao')
+    .length;
+  return {
+    hasKakaoRestApiKey: Boolean(props.getProperty('KAKAO_REST_API_KEY')),
+    hasKakaoRefreshToken: Boolean(props.getProperty('KAKAO_REFRESH_TOKEN')),
+    triggerCount,
+    lastSentKey: props.getProperty('LAST_SENT_KEY') || '',
+    lastCheckedAt: props.getProperty('LAST_CHECKED_AT') || '',
+    lastError: props.getProperty('LAST_ERROR') || '',
+  };
+}
+
+function jsonp_(e, payload) {
+  const body = JSON.stringify(payload);
+  const callback = e && e.parameter && e.parameter.callback;
+  if (callback) {
+    return ContentService
+      .createTextOutput(`${callback}(${body});`)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService
+    .createTextOutput(body)
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function checkAndSendKakao() {
