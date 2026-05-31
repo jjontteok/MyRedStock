@@ -384,7 +384,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
 """
 
 
-def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, settings: dict | None = None) -> None:
+def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, settings: Optional[dict] = None) -> None:
     docs = Path("docs")
     briefings = docs / "briefings"
     briefings.mkdir(parents=True, exist_ok=True)
