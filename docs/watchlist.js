@@ -12,6 +12,7 @@
   const closeButtons = document.querySelectorAll('[data-watchlist-close]');
   const status = document.querySelector('[data-watchlist-status]');
   const sheetLink = document.querySelector('[data-watchlist-sheet]');
+  const timeInput = document.querySelector('[data-briefing-time]');
 
   if (!button || !modal || !list || !addButton || !form || !status) return;
   if (sheetLink && config.sheetEditUrl) sheetLink.href = config.sheetEditUrl;
@@ -60,6 +61,7 @@
     try {
       const data = await loadStocksJsonp();
       render(Array.isArray(data.stocks) ? data.stocks : fallbackStocks);
+      if (timeInput && data.briefingTime) timeInput.value = data.briefingTime;
       setStatus('', '');
     } catch (error) {
       setStatus('종목 목록을 불러오지 못했습니다. 현재 브리핑 종목을 보여줍니다.', 'warn');
@@ -127,6 +129,7 @@
       .map((input) => input.value.trim())
       .filter(Boolean)
       .filter((value, index, array) => array.indexOf(value) === index);
+    const briefingTime = timeInput ? timeInput.value : '07:30';
 
     if (!stocks.length) {
       setStatus('종목을 하나 이상 입력해주세요.', 'warn');
@@ -143,9 +146,9 @@
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ stocks })
+        body: JSON.stringify({ stocks, briefingTime })
       });
-      setStatus('저장 요청을 보냈습니다. 다음 브리핑부터 반영됩니다.', 'ok');
+      setStatus('저장 요청을 보냈습니다. 다음 브리핑부터 종목과 시간이 반영됩니다.', 'ok');
     } catch (error) {
       setStatus('저장하지 못했습니다. Google Apps Script 배포 URL을 확인해주세요.', 'error');
     }

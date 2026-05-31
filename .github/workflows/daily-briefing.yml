@@ -2,8 +2,8 @@ name: Daily stock Kakao briefing
 
 on:
   schedule:
-    # 07:30 Asia/Seoul = 22:30 UTC on the previous day.
-    - cron: "30 22 * * *"
+    # Wake up often; send_briefing.py checks the user-selected KST send time.
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -34,7 +34,9 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-4.1-mini' }}
           PUBLIC_BRIEFING_URL: ${{ vars.PUBLIC_BRIEFING_URL }}
+          WATCHLIST_API_URL: ${{ vars.WATCHLIST_API_URL }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: python send_briefing.py
 
       - name: Publish briefing page

@@ -2,8 +2,9 @@ import csv
 import html
 import json
 import os
+import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Optional
@@ -45,6 +46,48 @@ def load_watchlist() -> list[str]:
             continue
         stocks.append(value)
     return stocks
+
+
+def load_remote_settings() -> dict:
+    url = os.getenv("WATCHLIST_API_URL", "").strip()
+    if not url:
+        return {}
+    response = requests.get(url, timeout=20)
+    response.raise_for_status()
+    data = response.json()
+    if not isinstance(data, dict) or not data.get("ok"):
+        return {}
+    return data
+
+
+def kst_now() -> datetime:
+    return datetime.now(timezone(timedelta(hours=9)))
+
+
+def selected_time(settings: dict) -> str:
+    value = str(settings.get("briefingTime") or "07:30").strip()
+    if re.match(r"^\d{2}:\d{2}$", value):
+        hour, minute = [int(part) for part in value.split(":")]
+        if 0 <= hour <= 23 and 0 <= minute <= 59:
+            return value
+    return "07:30"
+
+
+def should_send_now(settings: dict) -> bool:
+    if os.getenv("GITHUB_EVENT_NAME") != "schedule":
+        return True
+    now = kst_now()
+    hour, minute = [int(part) for part in selected_time(settings).split(":")]
+    target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    delta_minutes = (now - target).total_seconds() / 60
+    if not 0 <= delta_minutes < 10:
+        print(f"Not send time yet. now={now.strftime('%H:%M')} target={hour:02d}:{minute:02d}")
+        return False
+    dated_page = Path("docs") / "briefings" / f"{now.strftime('%Y-%m-%d')}.html"
+    if dated_page.exists():
+        print(f"Today's briefing already exists: {dated_page}")
+        return False
+    return True
 
 
 def fetch_news(stocks: list[str]) -> list[dict]:
@@ -538,6 +581,16 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
     }}
     .dialog h2 {{ margin: 0; }}
     .dialog-body {{ padding: 18px; }}
+    .field-label {{
+      display: block;
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 750;
+      color: var(--muted);
+    }}
+    .time-field {{
+      margin-bottom: 18px;
+    }}
     .watch-row {{
       display: grid;
       grid-template-columns: 1fr 40px;
@@ -604,6 +657,10 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
         <button type="button" class="icon-button" data-watchlist-close aria-label="닫기">×</button>
       </div>
       <div class="dialog-body">
+        <label class="field-label" for="briefing-time">발송 시간</label>
+        <div class="time-field">
+          <input id="briefing-time" type="time" data-briefing-time value="07:30">
+        </div>
         <div data-watchlist-list></div>
         <button type="button" data-watchlist-add>+ 종목 추가</button>
         <p class="status" data-watchlist-status></p>
@@ -688,7 +745,12 @@ def send_kakao_message(text: str, link_url: str = SHEET_LINK, button_title: str 
 
 
 def main() -> int:
-    stocks = load_watchlist()
+    settings = load_remote_settings()
+    if not should_send_now(settings):
+        return 0
+
+    remote_stocks = settings.get("stocks") if isinstance(settings.get("stocks"), list) else []
+    stocks = [str(stock).strip() for stock in remote_stocks if str(stock).strip()] or load_watchlist()
     if not stocks:
         send_kakao_message("RedStock: Google Sheets A열에 브리핑 받을 종목을 추가해주세요.")
         return 0

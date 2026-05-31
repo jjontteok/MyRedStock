@@ -192,6 +192,16 @@
     }
     .dialog h2 { margin: 0; }
     .dialog-body { padding: 18px; }
+    .field-label {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 750;
+      color: var(--muted);
+    }
+    .time-field {
+      margin-bottom: 18px;
+    }
     .watch-row {
       display: grid;
       grid-template-columns: 1fr 40px;
@@ -234,7 +244,7 @@
     <div class="wrap top">
       <div class="brand"><span class="mark">RS</span>RedStock</div>
       <h1>오늘의 주식 뉴스 브리핑</h1>
-      <div class="meta">2026-05-31 13:14 생성 · Google Sheets 관심종목 기준</div>
+      <div class="meta">2026-05-31 16:56 생성 · Google Sheets 관심종목 기준</div>
       <div class="tags"><span data-stock-tag>삼성전자</span><span data-stock-tag>LG전자</span><span data-stock-tag>SK하이닉스</span></div>
       <div class="actions">
         <button type="button" class="primary" data-watchlist-open>주식 종목 설정하기</button>
@@ -292,6 +302,10 @@
         <button type="button" class="icon-button" data-watchlist-close aria-label="닫기">×</button>
       </div>
       <div class="dialog-body">
+        <label class="field-label" for="briefing-time">발송 시간</label>
+        <div class="time-field">
+          <input id="briefing-time" type="time" data-briefing-time value="07:30">
+        </div>
         <div data-watchlist-list></div>
         <button type="button" data-watchlist-add>+ 종목 추가</button>
         <p class="status" data-watchlist-status></p>
