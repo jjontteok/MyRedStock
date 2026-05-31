@@ -27,7 +27,21 @@ function doGet(e) {
     .filter(value => value && !value.startsWith('#'));
 
   const callback = e && e.parameter && e.parameter.callback;
-  const body = JSON.stringify({ ok: true, stocks: values, briefingTime: getBriefingTime_() });
+  const props = PropertiesService.getScriptProperties();
+  const triggerCount = ScriptApp.getProjectTriggers()
+    .filter(trigger => trigger.getHandlerFunction() === 'checkAndSendKakao')
+    .length;
+  const body = JSON.stringify({
+    ok: true,
+    stocks: values,
+    briefingTime: getBriefingTime_(),
+    diagnostics: {
+      hasKakaoRestApiKey: Boolean(props.getProperty('KAKAO_REST_API_KEY')),
+      hasKakaoRefreshToken: Boolean(props.getProperty('KAKAO_REFRESH_TOKEN')),
+      triggerCount,
+      lastSentKey: props.getProperty('LAST_SENT_KEY') || '',
+    },
+  });
   if (callback) {
     return ContentService
       .createTextOutput(`${callback}(${body});`)
