@@ -73,7 +73,7 @@ def selected_time(settings: dict) -> str:
     return "07:30"
 
 
-def sent_marker_path(settings: dict, now: datetime | None = None) -> Path:
+def sent_marker_path(settings: dict, now: Optional[datetime] = None) -> Path:
     current = now or kst_now()
     send_time = selected_time(settings).replace(":", "")
     return Path("docs") / ".sent" / f"{current.strftime('%Y-%m-%d')}-{send_time}.txt"
