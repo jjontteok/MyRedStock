@@ -81,6 +81,21 @@ Kakao Developers에서 링크 버튼이 열리지 않으면 `앱 -> 제품 링�
 
 카카오톡에는 짧은 도착 알림과 브리핑 페이지 버튼만 보냅니다. 전체 요약, 종목별 내용, 출처 링크는 GitHub Pages에서 확인합니다.
 
+## 관심 종목 설정 UI
+
+브리핑 페이지의 `주식 종목 설정하기` 버튼은 `docs/watchlist.js`에서 동작합니다. 정적 GitHub Pages는 Google Sheets에 직접 쓸 수 없으므로, Google Apps Script 웹앱을 중간 저장 API로 사용합니다.
+
+1. Google Sheet를 엽니다.
+2. `확장 프로그램 -> Apps Script`를 엽니다.
+3. `apps-script/Code.gs` 내용을 Apps Script 편집기에 붙여넣습니다.
+4. `SHEET_NAME`이 실제 시트 이름과 다르면 수정합니다.
+5. `배포 -> 새 배포 -> 웹 앱`을 선택합니다.
+6. 실행 권한은 본인, 액세스 권한은 `모든 사용자`로 설정합니다.
+7. 배포 후 Web App URL을 복사합니다.
+8. `docs/config.js`의 `watchlistApiUrl`에 Web App URL을 넣고 commit/push합니다.
+
+연결 전에는 페이지에서 현재 브리핑 종목을 보여주지만, 제출 저장은 동작하지 않습니다. 연결 후에는 입력/추가/삭제 후 `제출하기`를 누르면 Google Sheets A열이 갱신되고 다음 브리핑부터 반영됩니다.
+
 ## 로컬 테스트
 
 `.env.example`을 참고해 환경 변수를 설정한 뒤 실행합니다.
