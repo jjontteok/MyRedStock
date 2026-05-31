@@ -94,7 +94,9 @@ Kakao Developers에서 링크 버튼이 열리지 않으면 `앱 -> 제품 링�
 7. 배포 후 Web App URL을 복사합니다.
 8. `docs/config.js`의 `watchlistApiUrl`에 Web App URL을 넣고 commit/push합니다.
 
-연결 전에는 페이지에서 현재 브리핑 종목을 보여주지만, 제출 저장은 동작하지 않습니다. 연결 후에는 입력/추가/삭제 후 `제출하기`를 누르면 Google Sheets A열이 갱신되고 다음 브리핑부터 반영됩니다.
+연결 전에는 페이지에서 현재 브리핑 종목을 보여주지만, 제출 저장은 동작하지 않습니다. 연결 후에는 입력/추가/삭제와 발송 시간 변경 후 `제출하기`를 누르면 Google Sheets A열과 발송 시간이 갱신되고 다음 브리핑부터 반영됩니다.
+
+GitHub Actions는 10분마다 깨어난 뒤 Apps Script의 `briefingTime` 값을 확인합니다. 설정한 한국시간 기준 발송 시각과 맞을 때만 카카오톡 브리핑을 보냅니다.
 
 ## 로컬 테스트
 
