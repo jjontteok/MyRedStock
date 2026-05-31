@@ -6,11 +6,10 @@ import sys
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from typing import Optional
 from urllib.parse import quote_plus
 
-import feedparser
 import requests
-from openai import OpenAI
 
 
 DEFAULT_SHEET_CSV_URL = (
@@ -22,7 +21,7 @@ KAKAO_MEMO_URL = "https://kapi.kakao.com/v2/api/talk/memo/default/send"
 SHEET_LINK = "https://docs.google.com/spreadsheets/d/1yC36MDsTswSkwLbZe5OwwGdjw2ViVcN0vpC1AzBXNY0/edit?hl=ko&gid=0#gid=0"
 
 
-def env(name: str, default: str | None = None) -> str:
+def env(name: str, default: Optional[str] = None) -> str:
     value = os.getenv(name, default)
     if value is None or value.strip() == "":
         raise RuntimeError(f"Missing required environment variable: {name}")
@@ -49,6 +48,8 @@ def load_watchlist() -> list[str]:
 
 
 def fetch_news(stocks: list[str]) -> list[dict]:
+    import feedparser
+
     articles: list[dict] = []
     seen: set[str] = set()
     for stock in stocks:
@@ -74,6 +75,8 @@ def fetch_news(stocks: list[str]) -> list[dict]:
 
 
 def summarize(stocks: list[str], articles: list[dict]) -> str:
+    from openai import OpenAI
+
     model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
     client = OpenAI(api_key=env("OPENAI_API_KEY"))
     today = datetime.now().strftime("%Y-%m-%d")
@@ -324,6 +327,300 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str) 
     page = render_briefing_page(stocks, articles, briefing)
     (docs / "index.html").write_text(page, encoding="utf-8")
     (briefings / f"{today}.html").write_text(page, encoding="utf-8")
+
+
+def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
+    today = datetime.now().strftime("%Y-%m-%d")
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    article_rows = "\n".join(
+        f"""
+        <li>
+          <span class="ticker">{html.escape(article["stock"])}</span>
+          <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
+          <small>{html.escape(article.get("published", ""))}</small>
+        </li>
+        """
+        for article in articles[:18]
+    )
+    stock_tags = "".join(f"<span data-stock-tag>{html.escape(stock)}</span>" for stock in stocks)
+    briefing_html = "<br>".join(html.escape(briefing).splitlines())
+    return f"""<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RedStock Briefing - {today}</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --ink: #171717;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --paper: #ffffff;
+      --bg: #f5f7fb;
+      --red: #d92035;
+      --green: #0f8b5f;
+      --blue: #1d5fd1;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.58;
+    }}
+    body.modal-open {{ overflow: hidden; }}
+    header {{
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+    }}
+    .wrap {{
+      width: min(920px, calc(100% - 32px));
+      margin: 0 auto;
+    }}
+    .top {{ padding: 34px 0 24px; }}
+    .brand {{
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--red);
+      font-weight: 800;
+    }}
+    .mark {{
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: var(--red);
+      font-size: 13px;
+    }}
+    h1 {{
+      margin: 18px 0 8px;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }}
+    .meta {{
+      color: var(--muted);
+      font-size: 14px;
+    }}
+    main {{ padding: 22px 0 44px; }}
+    section {{
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      margin-top: 16px;
+    }}
+    h2 {{
+      margin: 0 0 14px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }}
+    .tags {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }}
+    .tags span {{
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: var(--muted);
+      background: #fbfcff;
+    }}
+    .actions {{
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }}
+    button, .button-link {{
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      min-height: 40px;
+      padding: 0 14px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }}
+    button.primary {{
+      background: var(--red);
+      border-color: var(--red);
+      color: #fff;
+    }}
+    .icon-button {{
+      width: 40px;
+      padding: 0;
+      font-size: 22px;
+      line-height: 1;
+    }}
+    .briefing {{
+      font-size: 16px;
+      white-space: normal;
+    }}
+    ul {{
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }}
+    li {{
+      padding: 13px 0;
+      border-top: 1px solid var(--line);
+    }}
+    li:first-child {{
+      border-top: 0;
+      padding-top: 0;
+    }}
+    a {{
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 650;
+    }}
+    a:hover {{ text-decoration: underline; }}
+    .ticker {{
+      display: inline-block;
+      min-width: 86px;
+      margin-right: 8px;
+      color: var(--green);
+      font-weight: 800;
+    }}
+    small {{
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+    }}
+    .modal {{
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(17, 24, 39, 0.42);
+      z-index: 10;
+    }}
+    .modal[hidden] {{ display: none; }}
+    .dialog {{
+      width: min(560px, 100%);
+      max-height: min(760px, calc(100vh - 36px));
+      overflow: auto;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.22);
+    }}
+    .dialog-head, .dialog-foot {{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+    }}
+    .dialog-foot {{
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }}
+    .dialog h2 {{ margin: 0; }}
+    .dialog-body {{ padding: 18px; }}
+    .watch-row {{
+      display: grid;
+      grid-template-columns: 1fr 40px;
+      gap: 8px;
+      margin-bottom: 8px;
+    }}
+    input {{
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      font: inherit;
+    }}
+    .status {{
+      min-height: 20px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    .status[data-tone="ok"] {{ color: var(--green); }}
+    .status[data-tone="warn"] {{ color: #9a6700; }}
+    .status[data-tone="error"] {{ color: var(--red); }}
+    footer {{
+      padding: 18px 0 34px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
+    @media (max-width: 640px) {{
+      .wrap {{ width: min(100% - 24px, 920px); }}
+      section {{ padding: 18px; }}
+      .ticker {{ display: block; margin-bottom: 4px; }}
+      .dialog-foot {{ justify-content: stretch; }}
+      .dialog-foot > * {{ flex: 1; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap top">
+      <div class="brand"><span class="mark">RS</span>RedStock</div>
+      <h1>오늘의 주식 뉴스 브리핑</h1>
+      <div class="meta">{generated_at} 생성 · Google Sheets 관심종목 기준</div>
+      <div class="tags">{stock_tags}</div>
+      <div class="actions">
+        <button type="button" class="primary" data-watchlist-open>주식 종목 설정하기</button>
+      </div>
+    </div>
+  </header>
+  <main class="wrap">
+    <section>
+      <h2>요약</h2>
+      <div class="briefing">{briefing_html}</div>
+    </section>
+    <section>
+      <h2>확인한 뉴스</h2>
+      <ul>{article_rows}</ul>
+    </section>
+  </main>
+  <div class="modal" data-watchlist-modal hidden>
+    <form class="dialog" data-watchlist-form>
+      <div class="dialog-head">
+        <h2>관심 종목 설정</h2>
+        <button type="button" class="icon-button" data-watchlist-close aria-label="닫기">×</button>
+      </div>
+      <div class="dialog-body">
+        <div data-watchlist-list></div>
+        <button type="button" data-watchlist-add>+ 종목 추가</button>
+        <p class="status" data-watchlist-status></p>
+      </div>
+      <div class="dialog-foot">
+        <a class="button-link" data-watchlist-sheet href="{SHEET_LINK}" target="_blank" rel="noreferrer">시트 열기</a>
+        <button type="button" data-watchlist-close>취소</button>
+        <button type="submit" class="primary">제출하기</button>
+      </div>
+    </form>
+  </div>
+  <footer class="wrap">투자 판단은 본인의 책임이며, 이 페이지는 뉴스 요약 참고용입니다.</footer>
+  <script src="/MyRedStock/config.js"></script>
+  <script src="/MyRedStock/watchlist.js"></script>
+</body>
+</html>
+"""
 
 
 def refresh_access_token() -> str:
