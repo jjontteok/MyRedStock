@@ -13,6 +13,8 @@
   const status = document.querySelector('[data-watchlist-status]');
   const sheetLink = document.querySelector('[data-watchlist-sheet]');
   const timeInput = document.querySelector('[data-briefing-time]');
+  const timeDisplay = document.querySelector('[data-briefing-time-display]');
+  const stockTags = document.querySelector('[data-stock-tags]');
 
   const text = {
     placeholder: '\uc608: \uc0bc\uc131\uc804\uc790 \ub610\ub294 NVDA',
@@ -32,6 +34,22 @@
   function setStatus(message, tone) {
     status.textContent = message || '';
     status.dataset.tone = tone || '';
+  }
+
+  function updateVisibleSettings(stocks, briefingTime) {
+    const cleanStocks = (stocks || []).map((stock) => String(stock).trim()).filter(Boolean);
+    if (stockTags) {
+      stockTags.innerHTML = '';
+      cleanStocks.forEach((stock) => {
+        const tag = document.createElement('span');
+        tag.dataset.stockTag = '';
+        tag.textContent = stock;
+        stockTags.append(tag);
+      });
+    }
+    if (timeDisplay && briefingTime) {
+      timeDisplay.textContent = briefingTime;
+    }
   }
 
   function makeRow(value) {
@@ -102,8 +120,10 @@
     }
     try {
       const data = await loadStocksJsonp();
-      render(Array.isArray(data.stocks) ? data.stocks : fallbackStocks);
+      const loadedStocks = Array.isArray(data.stocks) ? data.stocks : fallbackStocks;
+      render(loadedStocks);
       if (timeInput && data.briefingTime) timeInput.value = data.briefingTime;
+      updateVisibleSettings(loadedStocks, data.briefingTime);
       setStatus('', '');
     } catch (error) {
       setStatus(text.loadFailed, 'warn');
@@ -160,9 +180,12 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ stocks, briefingTime })
       });
+      updateVisibleSettings(stocks, briefingTime);
       setStatus(text.saved, 'ok');
     } catch (error) {
       setStatus(text.saveFailed, 'error');
     }
   });
+
+  loadStocks();
 })();

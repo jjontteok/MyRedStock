@@ -483,6 +483,17 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       flex-wrap: wrap;
       gap: 10px;
     }}
+    .settings-summary {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }}
+    .settings-summary strong {{
+      color: var(--ink);
+    }}
     button, .button-link {{
       appearance: none;
       border: 1px solid var(--line);
@@ -634,7 +645,10 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       <div class="brand"><span class="mark">RS</span>RedStock</div>
       <h1>오늘의 주식 뉴스 브리핑</h1>
       <div class="meta">{generated_at} 생성 · Google Sheets 관심종목 기준</div>
-      <div class="tags">{stock_tags}</div>
+      <div class="settings-summary">
+        <span>발송 시간 <strong data-briefing-time-display>07:30</strong></span>
+      </div>
+      <div class="tags" data-stock-tags>{stock_tags}</div>
       <div class="actions">
         <button type="button" class="primary" data-watchlist-open>주식 종목 설정하기</button>
       </div>
