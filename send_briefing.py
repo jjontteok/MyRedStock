@@ -392,10 +392,11 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, 
     page = render_briefing_page(stocks, articles, briefing)
     (docs / "index.html").write_text(page, encoding="utf-8")
     (briefings / f"{today}.html").write_text(page, encoding="utf-8")
-    sent_dir = docs / ".sent"
-    sent_dir.mkdir(parents=True, exist_ok=True)
-    marker = sent_marker_path(settings or {}, kst_now())
-    marker.write_text(datetime.now().isoformat(), encoding="utf-8")
+    if os.getenv("GITHUB_EVENT_NAME") == "schedule":
+        sent_dir = docs / ".sent"
+        sent_dir.mkdir(parents=True, exist_ok=True)
+        marker = sent_marker_path(settings or {}, kst_now())
+        marker.write_text(datetime.now().isoformat(), encoding="utf-8")
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
