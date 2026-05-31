@@ -169,6 +169,11 @@
     syncVisibleFromForm();
   });
   if (timeInput) timeInput.addEventListener('input', syncVisibleFromForm);
+  window.addEventListener('pageshow', loadStocks);
+  window.addEventListener('focus', loadStocks);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) loadStocks();
+  });
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();

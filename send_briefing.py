@@ -83,9 +83,9 @@ def should_send_now(settings: dict) -> bool:
     if not 0 <= delta_minutes < 30:
         print(f"Not send time yet. now={now.strftime('%H:%M')} target={hour:02d}:{minute:02d}")
         return False
-    dated_page = Path("docs") / "briefings" / f"{now.strftime('%Y-%m-%d')}.html"
-    if dated_page.exists():
-        print(f"Today's briefing already exists: {dated_page}")
+    sent_marker = Path("docs") / ".sent" / f"{now.strftime('%Y-%m-%d')}.txt"
+    if sent_marker.exists():
+        print(f"Today's briefing was already sent: {sent_marker}")
         return False
     return True
 
@@ -371,6 +371,9 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str) 
     page = render_briefing_page(stocks, articles, briefing)
     (docs / "index.html").write_text(page, encoding="utf-8")
     (briefings / f"{today}.html").write_text(page, encoding="utf-8")
+    sent_dir = docs / ".sent"
+    sent_dir.mkdir(parents=True, exist_ok=True)
+    (sent_dir / f"{today}.txt").write_text(datetime.now().isoformat(), encoding="utf-8")
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
