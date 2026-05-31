@@ -9,6 +9,7 @@ stocks = [
     "\uc0bc\uc131\uc804\uc790",
     "LG\uc804\uc790",
     "SK\ud558\uc774\ub2c9\uc2a4",
+    "\uc0bc\uc131\uc804\uae30",
 ]
 
 briefing = "\n\n".join(

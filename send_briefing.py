@@ -182,6 +182,7 @@ def dated_briefing_url() -> str:
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    asset_version = datetime.now().strftime("%Y%m%d%H%M%S")
     article_rows = "\n".join(
         f"""
         <li>
@@ -375,6 +376,7 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str) 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    asset_version = datetime.now().strftime("%Y%m%d%H%M%S")
     article_rows = "\n".join(
         f"""
         <li>
@@ -687,8 +689,8 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
     </form>
   </div>
   <footer class="wrap">투자 판단은 본인의 책임이며, 이 페이지는 뉴스 요약 참고용입니다.</footer>
-  <script src="/MyRedStock/config.js"></script>
-  <script src="/MyRedStock/watchlist.js"></script>
+  <script src="/MyRedStock/config.js?v={asset_version}"></script>
+  <script src="/MyRedStock/watchlist.js?v={asset_version}"></script>
 </body>
 </html>
 """
