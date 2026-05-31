@@ -156,7 +156,7 @@ def summarize(stocks: list[str], articles: list[dict]) -> str:
 
     model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
     client = OpenAI(api_key=env("OPENAI_API_KEY"))
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = kst_now().strftime("%Y-%m-%d")
 
     response = client.responses.create(
         model=model,
@@ -208,15 +208,17 @@ def dated_briefing_url() -> str:
     base_url = public_briefing_url()
     if not base_url.startswith("http"):
         return base_url
-    today = datetime.now().strftime("%Y-%m-%d")
-    version = datetime.now().strftime("%Y%m%d%H%M")
+    now = kst_now()
+    today = now.strftime("%Y-%m-%d")
+    version = now.strftime("%Y%m%d%H%M")
     return f"{base_url.rstrip('/')}/briefings/{today}.html?v={version}"
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
-    today = datetime.now().strftime("%Y-%m-%d")
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-    asset_version = datetime.now().strftime("%Y%m%d%H%M%S")
+    now = kst_now()
+    today = now.strftime("%Y-%m-%d")
+    generated_at = now.strftime("%Y-%m-%d %H:%M")
+    asset_version = now.strftime("%Y%m%d%H%M%S")
     article_rows = "\n".join(
         f"""
         <li>
@@ -416,7 +418,7 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, 
     docs = Path("docs")
     briefings = docs / "briefings"
     briefings.mkdir(parents=True, exist_ok=True)
-    today = datetime.now().strftime("%Y-%m-%d")
+    today = kst_now().strftime("%Y-%m-%d")
     page = render_briefing_page(stocks, articles, briefing)
     (docs / "index.html").write_text(page, encoding="utf-8")
     (briefings / f"{today}.html").write_text(page, encoding="utf-8")
@@ -424,13 +426,14 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, 
         sent_dir = docs / ".sent"
         sent_dir.mkdir(parents=True, exist_ok=True)
         marker = sent_marker_path(settings or {}, kst_now())
-        marker.write_text(datetime.now().isoformat(), encoding="utf-8")
+        marker.write_text(kst_now().isoformat(), encoding="utf-8")
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
-    today = datetime.now().strftime("%Y-%m-%d")
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
-    asset_version = datetime.now().strftime("%Y%m%d%H%M%S")
+    now = kst_now()
+    today = now.strftime("%Y-%m-%d")
+    generated_at = now.strftime("%Y-%m-%d %H:%M")
+    asset_version = now.strftime("%Y%m%d%H%M%S")
     article_rows = "\n".join(
         f"""
         <li>
