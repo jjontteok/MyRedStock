@@ -80,7 +80,7 @@ def should_send_now(settings: dict) -> bool:
     hour, minute = [int(part) for part in selected_time(settings).split(":")]
     target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
     delta_minutes = (now - target).total_seconds() / 60
-    if not 0 <= delta_minutes < 10:
+    if not 0 <= delta_minutes < 30:
         print(f"Not send time yet. now={now.strftime('%H:%M')} target={hour:02d}:{minute:02d}")
         return False
     dated_page = Path("docs") / "briefings" / f"{now.strftime('%Y-%m-%d')}.html"
