@@ -98,6 +98,19 @@ Kakao Developers에서 링크 버튼이 열리지 않으면 `앱 -> 제품 링�
 
 GitHub Actions는 10분마다 깨어난 뒤 Apps Script의 `briefingTime` 값을 확인합니다. 설정한 한국시간 기준 발송 시각과 맞을 때만 카카오톡 브리핑을 보냅니다.
 
+### Apps Script 카카오 알림 트리거
+
+GitHub Actions 스케줄이 지연되거나 누락되는 경우를 대비해 Apps Script에서도 10분마다 설정 시간을 확인하고 카카오톡 링크 알림을 보낼 수 있습니다.
+
+Apps Script의 `프로젝트 설정 -> 스크립트 속성`에 아래 값을 추가합니다.
+
+```text
+KAKAO_REST_API_KEY
+KAKAO_REFRESH_TOKEN
+```
+
+그다음 Apps Script 편집기에서 `setupRedStockTrigger()`를 한 번 실행합니다. 테스트 발송은 `testSendKakaoNow()`로 확인할 수 있습니다.
+
 ## 로컬 테스트
 
 `.env.example`을 참고해 환경 변수를 설정한 뒤 실행합니다.

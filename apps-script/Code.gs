@@ -1,5 +1,8 @@
 const SHEET_NAME = 'Sheet1';
 const DEFAULT_BRIEFING_TIME = '07:30';
+const BRIEFING_PAGE_URL = 'https://jjontteok.github.io/MyRedStock/';
+const KAKAO_TOKEN_URL = 'https://kauth.kakao.com/oauth/token';
+const KAKAO_MEMO_URL = 'https://kapi.kakao.com/v2/api/talk/memo/default/send';
 
 function getBriefingTime_() {
   return PropertiesService.getScriptProperties().getProperty('BRIEFING_TIME') || DEFAULT_BRIEFING_TIME;
@@ -55,4 +58,97 @@ function doPost(e) {
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, stocks: cleaned, briefingTime }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function setupRedStockTrigger() {
+  ScriptApp.getProjectTriggers()
+    .filter(trigger => trigger.getHandlerFunction() === 'checkAndSendKakao')
+    .forEach(trigger => ScriptApp.deleteTrigger(trigger));
+
+  ScriptApp.newTrigger('checkAndSendKakao')
+    .timeBased()
+    .everyMinutes(10)
+    .create();
+}
+
+function checkAndSendKakao() {
+  const now = new Date();
+  const date = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd');
+  const currentTime = Utilities.formatDate(now, 'Asia/Seoul', 'HH:mm');
+  const targetTime = getBriefingTime_();
+
+  if (!isWithinSendWindow_(currentTime, targetTime, 30)) return;
+
+  const sentKey = `${date}-${targetTime}`;
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('LAST_SENT_KEY') === sentKey) return;
+
+  sendKakaoBriefingLink_(date, targetTime);
+  props.setProperty('LAST_SENT_KEY', sentKey);
+}
+
+function testSendKakaoNow() {
+  const now = new Date();
+  const date = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd');
+  sendKakaoBriefingLink_(date, getBriefingTime_());
+}
+
+function isWithinSendWindow_(currentTime, targetTime, windowMinutes) {
+  const current = toMinutes_(currentTime);
+  const target = toMinutes_(targetTime);
+  return current >= target && current < target + windowMinutes;
+}
+
+function toMinutes_(time) {
+  const parts = String(time).split(':').map(Number);
+  return parts[0] * 60 + parts[1];
+}
+
+function sendKakaoBriefingLink_(date, targetTime) {
+  const props = PropertiesService.getScriptProperties();
+  const restApiKey = props.getProperty('KAKAO_REST_API_KEY');
+  const refreshToken = props.getProperty('KAKAO_REFRESH_TOKEN');
+  if (!restApiKey || !refreshToken) {
+    throw new Error('Missing KAKAO_REST_API_KEY or KAKAO_REFRESH_TOKEN script property.');
+  }
+
+  const tokenResponse = UrlFetchApp.fetch(KAKAO_TOKEN_URL, {
+    method: 'post',
+    payload: {
+      grant_type: 'refresh_token',
+      client_id: restApiKey,
+      refresh_token: refreshToken,
+    },
+    muteHttpExceptions: false,
+  });
+  const token = JSON.parse(tokenResponse.getContentText()).access_token;
+  const url = `${BRIEFING_PAGE_URL}briefings/${date}.html?v=${Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMddHHmmss')}`;
+  const template = {
+    object_type: 'text',
+    text: `RedStock 브리핑 알림\n설정 시간: ${targetTime}\n${url}`,
+    link: {
+      web_url: url,
+      mobile_web_url: url,
+    },
+    buttons: [
+      {
+        title: '브리핑 보기',
+        link: {
+          web_url: url,
+          mobile_web_url: url,
+        },
+      },
+    ],
+  };
+
+  UrlFetchApp.fetch(KAKAO_MEMO_URL, {
+    method: 'post',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    payload: {
+      template_object: JSON.stringify(template),
+    },
+    muteHttpExceptions: false,
+  });
 }
