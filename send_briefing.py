@@ -99,6 +99,7 @@ def should_send_now(settings: dict) -> bool:
 def fetch_news(stocks: list[str]) -> list[dict]:
     import feedparser
 
+    fetched_at = kst_now().strftime("%H:%M")
     articles: list[dict] = []
     seen: set[str] = set()
     for stock in stocks:
@@ -117,10 +118,22 @@ def fetch_news(stocks: list[str]) -> list[dict]:
                     "title": title,
                     "link": link,
                     "published": getattr(entry, "published", ""),
+                    "published_display": format_published_time(entry),
+                    "fetched_at": fetched_at,
                     "source": getattr(getattr(entry, "source", None), "title", ""),
                 }
             )
     return articles
+
+
+def format_published_time(entry: object) -> str:
+    published_parsed = getattr(entry, "published_parsed", None)
+    if published_parsed:
+        published_utc = datetime(*published_parsed[:6], tzinfo=timezone.utc)
+        published_kst = published_utc.astimezone(timezone(timedelta(hours=9)))
+        return published_kst.strftime("%m/%d %H:%M")
+    published = str(getattr(entry, "published", "") or "").strip()
+    return published
 
 
 def summarize(stocks: list[str], articles: list[dict]) -> str:
@@ -208,8 +221,10 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
         f"""
         <li>
           <span class="ticker">{html.escape(article["stock"])}</span>
-          <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
-          <small>{html.escape(article.get("published", ""))}</small>
+          <span class="news-main">
+            <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
+            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 발췌 · {html.escape(article.get("fetched_at", ""))} 확인</span>
+          </span>
         </li>
         """
         for article in articles[:18]
@@ -342,6 +357,17 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       color: var(--green);
       font-weight: 800;
     }}
+    .news-main {{
+      display: inline;
+    }}
+    .news-time {{
+      display: inline-block;
+      margin-left: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }}
     small {{
       display: block;
       margin-top: 4px;
@@ -356,6 +382,8 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       .wrap {{ width: min(100% - 24px, 920px); }}
       section {{ padding: 18px; }}
       .ticker {{ display: block; margin-bottom: 4px; }}
+      .news-main {{ display: block; }}
+      .news-time {{ display: block; margin: 5px 0 0; }}
     }}
   </style>
 </head>
@@ -407,8 +435,10 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
         f"""
         <li>
           <span class="ticker">{html.escape(article["stock"])}</span>
-          <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
-          <small>{html.escape(article.get("published", ""))}</small>
+          <span class="news-main">
+            <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
+            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 발췌 · {html.escape(article.get("fetched_at", ""))} 확인</span>
+          </span>
         </li>
         """
         for article in articles[:18]
@@ -580,6 +610,17 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       color: var(--green);
       font-weight: 800;
     }}
+    .news-main {{
+      display: inline;
+    }}
+    .news-time {{
+      display: inline-block;
+      margin-left: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }}
     small {{
       display: block;
       margin-top: 4px;
@@ -662,6 +703,8 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       .wrap {{ width: min(100% - 24px, 920px); }}
       section {{ padding: 18px; }}
       .ticker {{ display: block; margin-bottom: 4px; }}
+      .news-main {{ display: block; }}
+      .news-time {{ display: block; margin: 5px 0 0; }}
       .dialog-foot {{ justify-content: stretch; }}
       .dialog-foot > * {{ flex: 1; }}
     }}
