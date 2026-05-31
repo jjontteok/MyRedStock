@@ -52,6 +52,17 @@
     }
   }
 
+  function collectStocks() {
+    return Array.from(list.querySelectorAll('input'))
+      .map((input) => input.value.trim())
+      .filter(Boolean)
+      .filter((value, index, array) => array.indexOf(value) === index);
+  }
+
+  function syncVisibleFromForm() {
+    updateVisibleSettings(collectStocks(), timeInput && timeInput.value ? timeInput.value : '07:30');
+  }
+
   function makeRow(value) {
     const row = document.createElement('div');
     row.className = 'watch-row';
@@ -61,6 +72,7 @@
     input.name = 'stock';
     input.placeholder = text.placeholder;
     input.value = value || '';
+    input.addEventListener('input', syncVisibleFromForm);
 
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -70,6 +82,7 @@
     remove.addEventListener('click', () => {
       if (list.children.length > 1) row.remove();
       else input.value = '';
+      syncVisibleFromForm();
     });
 
     row.append(input, remove);
@@ -153,14 +166,13 @@
   addButton.addEventListener('click', () => {
     list.append(makeRow(''));
     list.lastElementChild.querySelector('input').focus();
+    syncVisibleFromForm();
   });
+  if (timeInput) timeInput.addEventListener('input', syncVisibleFromForm);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const stocks = Array.from(list.querySelectorAll('input'))
-      .map((input) => input.value.trim())
-      .filter(Boolean)
-      .filter((value, index, array) => array.indexOf(value) === index);
+    const stocks = collectStocks();
     const briefingTime = timeInput && timeInput.value ? timeInput.value : '07:30';
 
     if (!stocks.length) {
