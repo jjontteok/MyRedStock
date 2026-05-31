@@ -58,13 +58,42 @@
       return;
     }
     try {
-      const res = await fetch(config.watchlistApiUrl, { method: 'GET' });
-      const data = await res.json();
+      const data = await loadStocksJsonp();
       render(Array.isArray(data.stocks) ? data.stocks : fallbackStocks);
       setStatus('', '');
     } catch (error) {
       setStatus('종목 목록을 불러오지 못했습니다. 현재 브리핑 종목을 보여줍니다.', 'warn');
     }
+  }
+
+  function loadStocksJsonp() {
+    return new Promise((resolve, reject) => {
+      const callbackName = `redstockWatchlist${Date.now()}`;
+      const script = document.createElement('script');
+      const separator = config.watchlistApiUrl.includes('?') ? '&' : '?';
+      script.src = `${config.watchlistApiUrl}${separator}callback=${callbackName}`;
+      script.async = true;
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error('watchlist timeout'));
+      }, 12000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callbackName];
+        script.remove();
+      }
+
+      window[callbackName] = (data) => {
+        cleanup();
+        resolve(data);
+      };
+      script.addEventListener('error', () => {
+        cleanup();
+        reject(new Error('watchlist load failed'));
+      });
+      document.head.append(script);
+    });
   }
 
   function openModal() {

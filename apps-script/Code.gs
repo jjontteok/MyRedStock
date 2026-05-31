@@ -9,8 +9,16 @@ function doGet() {
     .map(value => String(value).trim())
     .filter(value => value && !value.startsWith('#'));
 
+  const callback = arguments[0] && arguments[0].parameter && arguments[0].parameter.callback;
+  const body = JSON.stringify({ ok: true, stocks: values });
+  if (callback) {
+    return ContentService
+      .createTextOutput(`${callback}(${body});`)
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
   return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, stocks: values }))
+    .createTextOutput(body)
     .setMimeType(ContentService.MimeType.JSON);
 }
 
