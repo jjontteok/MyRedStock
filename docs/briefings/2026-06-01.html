@@ -137,6 +137,49 @@
       font-size: 16px;
       white-space: normal;
     }
+    .briefing p {
+      margin: 0;
+    }
+    .briefing p + p {
+      margin-top: 14px;
+    }
+    .summary-stock {
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }
+    .summary-stock:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .summary-stock strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 850;
+    }
+    .summary-stock span {
+      display: block;
+      color: #28323f;
+    }
+    .summary-check {
+      margin-top: 18px;
+      padding: 13px 14px;
+      border-left: 4px solid var(--red);
+      border-radius: 8px;
+      background: #fff4f5;
+      color: #3b1f24;
+      font-weight: 650;
+    }
+    .summary-check strong {
+      margin-right: 4px;
+      color: var(--red);
+      font-weight: 900;
+    }
+    .summary-note {
+      color: var(--muted);
+      font-weight: 700;
+    }
     ul {
       list-style: none;
       margin: 0;
@@ -281,7 +324,12 @@
   <main class="wrap">
     <section>
       <h2>요약</h2>
-      <div class="briefing">RedStock 오늘 브리핑<br>삼성전자: [비즈 인사이트] 반도체 빅2의 자사주 &#x27;책임경영&#x27;...&quot;삼성전자 &#x27;사업책임자&#x27; vs SK하이닉스 &#x27;이사회&#x27;&quot; - 서울타임즈뉴스 / 그들만의 세상?… 삼성전자·SK하이닉스 주식으로 진짜 &#x27;떼돈&#x27; 번 사람들의 정체 - 위키트리<br>LG전자: “주식하면서 이런 날은 처음 보네요”…‘LG’ 들어간 주식, 전부 타올랐다 - 매일경제 / &quot;침대주라 하지마&quot; LG전자 상한가…젠슨 황 방한 기대감에 그룹주 &#x27;고공행진&#x27; - 뉴스1<br>SK하이닉스: 삼전닉스 주요임원 자사주 수익률 최대 400% - 시사저널 / 국민연금, 국내주식 목표 비중 상향…삼성전자·SK하이닉스 영향은? - 매일경제 마켓<br>삼성전기: 삼성전기 담은 ETF 강세…반도체주 &#x27;고공행진&#x27; 계속 - 한국경제 / “그저 그런 휴대폰 부품주 아닙니다”…AI 올라탄 삼성전기 나흘새 59% 폭등 [이주의 Bull기둥] - 매일경제<br>체크: AI/HBM, 실적, 환율, 수급 변화를 함께 확인하세요.</div>
+      <div class="briefing"><p class="summary-note">RedStock 오늘 브리핑</p>
+<p class="summary-stock"><strong>삼성전자</strong><span>[비즈 인사이트] 반도체 빅2의 자사주 &#x27;책임경영&#x27;...&quot;삼성전자 &#x27;사업책임자&#x27; vs SK하이닉스 &#x27;이사회&#x27;&quot; - 서울타임즈뉴스 / 그들만의 세상?… 삼성전자·SK하이닉스 주식으로 진짜 &#x27;떼돈&#x27; 번 사람들의 정체 - 위키트리</span></p>
+<p class="summary-stock"><strong>LG전자</strong><span>“주식하면서 이런 날은 처음 보네요”…‘LG’ 들어간 주식, 전부 타올랐다 - 매일경제 / &quot;침대주라 하지마&quot; LG전자 상한가…젠슨 황 방한 기대감에 그룹주 &#x27;고공행진&#x27; - 뉴스1</span></p>
+<p class="summary-stock"><strong>SK하이닉스</strong><span>삼전닉스 주요임원 자사주 수익률 최대 400% - 시사저널 / 국민연금, 국내주식 목표 비중 상향…삼성전자·SK하이닉스 영향은? - 매일경제 마켓</span></p>
+<p class="summary-stock"><strong>삼성전기</strong><span>삼성전기 담은 ETF 강세…반도체주 &#x27;고공행진&#x27; 계속 - 한국경제 / “그저 그런 휴대폰 부품주 아닙니다”…AI 올라탄 삼성전기 나흘새 59% 폭등 [이주의 Bull기둥] - 매일경제</span></p>
+<p class="summary-check"><strong>체크:</strong> AI/HBM, 실적, 환율, 수급 변화를 함께 확인하세요.</p></div>
     </section>
     <section>
       <h2>확인한 뉴스</h2>

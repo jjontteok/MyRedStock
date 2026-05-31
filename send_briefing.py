@@ -214,6 +214,36 @@ def dated_briefing_url() -> str:
     return f"{base_url.rstrip('/')}/briefings/{today}.html?v={version}"
 
 
+def render_briefing_summary(briefing: str, stocks: list[str]) -> str:
+    paragraphs: list[str] = []
+    stock_names = [stock.strip() for stock in stocks if stock.strip()]
+
+    for raw_line in briefing.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        escaped = html.escape(line)
+        if line.startswith("체크:"):
+            label, body = line.split(":", 1)
+            paragraphs.append(
+                f'<p class="summary-check"><strong>{html.escape(label)}:</strong>{html.escape(body)}</p>'
+            )
+            continue
+
+        matched_stock = next((stock for stock in stock_names if line.startswith(f"{stock}:")), "")
+        if matched_stock:
+            body = line[len(matched_stock) + 1 :].strip()
+            paragraphs.append(
+                f'<p class="summary-stock"><strong>{html.escape(matched_stock)}</strong><span>{html.escape(body)}</span></p>'
+            )
+            continue
+
+        paragraphs.append(f'<p class="summary-note">{escaped}</p>')
+
+    return "\n".join(paragraphs)
+
+
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
     now = kst_now()
     today = now.strftime("%Y-%m-%d")
@@ -232,7 +262,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
         for article in articles[:18]
     )
     stock_tags = "".join(f"<span>{html.escape(stock)}</span>" for stock in stocks)
-    briefing_html = "<br>".join(html.escape(briefing).splitlines())
+    briefing_html = render_briefing_summary(briefing, stocks)
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -330,6 +360,49 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
     .briefing {{
       font-size: 16px;
       white-space: normal;
+    }}
+    .briefing p {{
+      margin: 0;
+    }}
+    .briefing p + p {{
+      margin-top: 14px;
+    }}
+    .summary-stock {{
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }}
+    .summary-stock:first-child {{
+      border-top: 0;
+      padding-top: 0;
+    }}
+    .summary-stock strong {{
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 850;
+    }}
+    .summary-stock span {{
+      display: block;
+      color: #28323f;
+    }}
+    .summary-check {{
+      margin-top: 18px;
+      padding: 13px 14px;
+      border-left: 4px solid var(--red);
+      border-radius: 8px;
+      background: #fff4f5;
+      color: #3b1f24;
+      font-weight: 650;
+    }}
+    .summary-check strong {{
+      margin-right: 4px;
+      color: var(--red);
+      font-weight: 900;
+    }}
+    .summary-note {{
+      color: var(--muted);
+      font-weight: 700;
     }}
     ul {{
       list-style: none;
@@ -447,7 +520,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
         for article in articles[:18]
     )
     stock_tags = "".join(f"<span data-stock-tag>{html.escape(stock)}</span>" for stock in stocks)
-    briefing_html = "<br>".join(html.escape(briefing).splitlines())
+    briefing_html = render_briefing_summary(briefing, stocks)
     return f"""<!doctype html>
 <html lang="ko">
 <head>
@@ -586,6 +659,49 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
     .briefing {{
       font-size: 16px;
       white-space: normal;
+    }}
+    .briefing p {{
+      margin: 0;
+    }}
+    .briefing p + p {{
+      margin-top: 14px;
+    }}
+    .summary-stock {{
+      padding: 14px 0;
+      border-top: 1px solid var(--line);
+    }}
+    .summary-stock:first-child {{
+      border-top: 0;
+      padding-top: 0;
+    }}
+    .summary-stock strong {{
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+      font-size: 17px;
+      font-weight: 850;
+    }}
+    .summary-stock span {{
+      display: block;
+      color: #28323f;
+    }}
+    .summary-check {{
+      margin-top: 18px;
+      padding: 13px 14px;
+      border-left: 4px solid var(--red);
+      border-radius: 8px;
+      background: #fff4f5;
+      color: #3b1f24;
+      font-weight: 650;
+    }}
+    .summary-check strong {{
+      margin-right: 4px;
+      color: var(--red);
+      font-weight: 900;
+    }}
+    .summary-note {{
+      color: var(--muted);
+      font-weight: 700;
     }}
     ul {{
       list-style: none;
