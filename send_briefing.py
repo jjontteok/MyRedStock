@@ -235,13 +235,23 @@ def render_briefing_summary(briefing: str, stocks: list[str]) -> str:
         if matched_stock:
             body = line[len(matched_stock) + 1 :].strip()
             paragraphs.append(
-                f'<p class="summary-stock"><strong>{html.escape(matched_stock)}</strong><span>{html.escape(body)}</span></p>'
+                f'<p class="summary-stock"><strong>{html.escape(matched_stock)}</strong>{render_stock_summary_lines(body)}</p>'
             )
             continue
 
         paragraphs.append(f'<p class="summary-note">{escaped}</p>')
 
     return "\n".join(paragraphs)
+
+
+def render_stock_summary_lines(body: str) -> str:
+    news_lines = [part.strip() for part in body.split(" / ") if part.strip()]
+    if len(news_lines) <= 1:
+        return f'<span class="summary-news-line">{html.escape(body)}</span>'
+    return "".join(
+        f'<span class="summary-news-line">{html.escape(news)}</span>'
+        for news in news_lines
+    )
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
@@ -382,9 +392,12 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       font-size: 17px;
       font-weight: 850;
     }}
-    .summary-stock span {{
+    .summary-news-line {{
       display: block;
       color: #28323f;
+    }}
+    .summary-news-line + .summary-news-line {{
+      margin-top: 8px;
     }}
     .summary-check {{
       margin-top: 18px;
@@ -681,9 +694,12 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       font-size: 17px;
       font-weight: 850;
     }}
-    .summary-stock span {{
+    .summary-news-line {{
       display: block;
       color: #28323f;
+    }}
+    .summary-news-line + .summary-news-line {{
+      margin-top: 8px;
     }}
     .summary-check {{
       margin-top: 18px;
