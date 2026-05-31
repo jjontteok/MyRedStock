@@ -124,6 +124,15 @@ def public_briefing_url() -> str:
     return f"https://{owner}.github.io/{repo}/"
 
 
+def dated_briefing_url() -> str:
+    base_url = public_briefing_url()
+    if not base_url.startswith("http"):
+        return base_url
+    today = datetime.now().strftime("%Y-%m-%d")
+    version = datetime.now().strftime("%Y%m%d%H%M")
+    return f"{base_url.rstrip('/')}/briefings/{today}.html?v={version}"
+
+
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -394,7 +403,7 @@ def main() -> int:
 
     briefing = summarize(stocks, articles)
     write_briefing_page(stocks, articles, briefing)
-    url = public_briefing_url()
+    url = dated_briefing_url()
     stock_text = ", ".join(stocks[:4])
     send_kakao_message(
         f"RedStock 오늘 브리핑 도착. 관심종목: {stock_text}. 전체 내용: {url}",
