@@ -14,6 +14,18 @@
   const sheetLink = document.querySelector('[data-watchlist-sheet]');
   const timeInput = document.querySelector('[data-briefing-time]');
 
+  const text = {
+    placeholder: '\uc608: \uc0bc\uc131\uc804\uc790 \ub610\ub294 NVDA',
+    remove: '\uc885\ubaa9 \uc0ad\uc81c',
+    apiMissing: '\uc544\uc9c1 \uc800\uc7a5 API\uac00 \uc5f0\uacb0\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4. \uc784\uc2dc\ub85c \ud604\uc7ac \ube0c\ub9ac\ud551 \uc885\ubaa9\uc744 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.',
+    loadFailed: '\uc885\ubaa9 \ubaa9\ub85d\uc744 \ubd88\ub7ec\uc624\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \ube0c\ub9ac\ud551 \uc885\ubaa9\uc744 \ubcf4\uc5ec\uc90d\ub2c8\ub2e4.',
+    needStock: '\uc885\ubaa9\uc744 \ud558\ub098 \uc774\uc0c1 \uc785\ub825\ud574\uc8fc\uc138\uc694.',
+    apiNotConfigured: '\uc800\uc7a5 API URL\uc774 \uc544\uc9c1 \uc124\uc815\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.',
+    saving: '\uc800\uc7a5 \uc911...',
+    saved: '\uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc74c \ube0c\ub9ac\ud551\ubd80\ud130 \uc885\ubaa9\uacfc \uc2dc\uac04\uc774 \ubc18\uc601\ub429\ub2c8\ub2e4.',
+    saveFailed: '\uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. Google Apps Script \ubc30\ud3ec URL\uc744 \ud655\uc778\ud574\uc8fc\uc138\uc694.'
+  };
+
   if (!button || !modal || !list || !addButton || !form || !status) return;
   if (sheetLink && config.sheetEditUrl) sheetLink.href = config.sheetEditUrl;
 
@@ -29,14 +41,14 @@
     const input = document.createElement('input');
     input.type = 'text';
     input.name = 'stock';
-    input.placeholder = '예: 삼성전자 또는 NVDA';
+    input.placeholder = text.placeholder;
     input.value = value || '';
 
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'icon-button';
-    remove.setAttribute('aria-label', '종목 삭제');
-    remove.textContent = '−';
+    remove.setAttribute('aria-label', text.remove);
+    remove.textContent = '-';
     remove.addEventListener('click', () => {
       if (list.children.length > 1) row.remove();
       else input.value = '';
@@ -50,22 +62,6 @@
     list.innerHTML = '';
     const values = stocks.length ? stocks : [''];
     values.forEach((stock) => list.append(makeRow(stock)));
-  }
-
-  async function loadStocks() {
-    render(fallbackStocks);
-    if (!config.watchlistApiUrl) {
-      setStatus('아직 저장 API가 연결되지 않았습니다. 임시로 현재 브리핑 종목을 보여줍니다.', 'warn');
-      return;
-    }
-    try {
-      const data = await loadStocksJsonp();
-      render(Array.isArray(data.stocks) ? data.stocks : fallbackStocks);
-      if (timeInput && data.briefingTime) timeInput.value = data.briefingTime;
-      setStatus('', '');
-    } catch (error) {
-      setStatus('종목 목록을 불러오지 못했습니다. 현재 브리핑 종목을 보여줍니다.', 'warn');
-    }
   }
 
   function loadStocksJsonp() {
@@ -96,6 +92,22 @@
       });
       document.head.append(script);
     });
+  }
+
+  async function loadStocks() {
+    render(fallbackStocks);
+    if (!config.watchlistApiUrl) {
+      setStatus(text.apiMissing, 'warn');
+      return;
+    }
+    try {
+      const data = await loadStocksJsonp();
+      render(Array.isArray(data.stocks) ? data.stocks : fallbackStocks);
+      if (timeInput && data.briefingTime) timeInput.value = data.briefingTime;
+      setStatus('', '');
+    } catch (error) {
+      setStatus(text.loadFailed, 'warn');
+    }
   }
 
   function openModal() {
@@ -129,18 +141,18 @@
       .map((input) => input.value.trim())
       .filter(Boolean)
       .filter((value, index, array) => array.indexOf(value) === index);
-    const briefingTime = timeInput ? timeInput.value : '07:30';
+    const briefingTime = timeInput && timeInput.value ? timeInput.value : '07:30';
 
     if (!stocks.length) {
-      setStatus('종목을 하나 이상 입력해주세요.', 'warn');
+      setStatus(text.needStock, 'warn');
       return;
     }
     if (!config.watchlistApiUrl) {
-      setStatus('저장 API URL이 아직 설정되지 않았습니다. README의 Apps Script 연결 단계를 완료해주세요.', 'error');
+      setStatus(text.apiNotConfigured, 'error');
       return;
     }
 
-    setStatus('저장 중...', '');
+    setStatus(text.saving, '');
     try {
       await fetch(config.watchlistApiUrl, {
         method: 'POST',
@@ -148,9 +160,9 @@
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ stocks, briefingTime })
       });
-      setStatus('저장 요청을 보냈습니다. 다음 브리핑부터 종목과 시간이 반영됩니다.', 'ok');
+      setStatus(text.saved, 'ok');
     } catch (error) {
-      setStatus('저장하지 못했습니다. Google Apps Script 배포 URL을 확인해주세요.', 'error');
+      setStatus(text.saveFailed, 'error');
     }
   });
 })();
