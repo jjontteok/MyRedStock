@@ -4,7 +4,7 @@
     .map((el) => el.textContent.trim())
     .filter(Boolean);
 
-  const button = document.querySelector('[data-watchlist-open]');
+  const openButtons = document.querySelectorAll('[data-watchlist-open]');
   const modal = document.querySelector('[data-watchlist-modal]');
   const list = document.querySelector('[data-watchlist-list]');
   const addButton = document.querySelector('[data-watchlist-add]');
@@ -15,6 +15,9 @@
   const timeInput = document.querySelector('[data-briefing-time]');
   const timeDisplay = document.querySelector('[data-briefing-time-display]');
   const stockTags = document.querySelector('[data-stock-tags]');
+  const stocksPanel = document.querySelector('[data-stocks-panel]');
+  const timePanel = document.querySelector('[data-time-panel]');
+  const dialogTitle = document.querySelector('[data-dialog-title]');
 
   const text = {
     placeholder: '\uc608: \uc0bc\uc131\uc804\uc790 \ub610\ub294 NVDA',
@@ -25,10 +28,14 @@
     apiNotConfigured: '\uc800\uc7a5 API URL\uc774 \uc544\uc9c1 \uc124\uc815\ub418\uc9c0 \uc54a\uc558\uc2b5\ub2c8\ub2e4.',
     saving: '\uc800\uc7a5 \uc911...',
     saved: '\uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc74c \ube0c\ub9ac\ud551\ubd80\ud130 \uc885\ubaa9\uacfc \uc2dc\uac04\uc774 \ubc18\uc601\ub429\ub2c8\ub2e4.',
-    saveFailed: '\uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. Google Apps Script \ubc30\ud3ec URL\uc744 \ud655\uc778\ud574\uc8fc\uc138\uc694.'
+    savedStocks: '\uc885\ubaa9\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc74c \ube0c\ub9ac\ud551\ubd80\ud130 \ubc18\uc601\ub429\ub2c8\ub2e4.',
+    savedTime: '\uc2dc\uac04\uc744 \uc800\uc7a5\ud588\uc2b5\ub2c8\ub2e4. \ub2e4\uc74c \uc54c\ub9bc\ubd80\ud130 \ubc18\uc601\ub429\ub2c8\ub2e4.',
+    saveFailed: '\uc800\uc7a5\ud558\uc9c0 \ubabb\ud588\uc2b5\ub2c8\ub2e4. Google Apps Script \ubc30\ud3ec URL\uc744 \ud655\uc778\ud574\uc8fc\uc138\uc694.',
+    titleStocks: '\uad00\uc2ec \uc885\ubaa9 \uc124\uc815',
+    titleTime: '\uc54c\ub9bc \uc2dc\uac04 \uc124\uc815'
   };
 
-  if (!button || !modal || !list || !addButton || !form || !status) return;
+  if (!openButtons.length || !modal || !list || !addButton || !form || !status) return;
   if (sheetLink && config.sheetEditUrl) sheetLink.href = config.sheetEditUrl;
 
   function setStatus(message, tone) {
@@ -143,12 +150,22 @@
     }
   }
 
-  function openModal() {
+  function setMode(mode) {
+    const normalized = mode === 'time' ? 'time' : 'stocks';
+    form.dataset.settingsCurrentMode = normalized;
+    if (stocksPanel) stocksPanel.hidden = normalized !== 'stocks';
+    if (timePanel) timePanel.hidden = normalized !== 'time';
+    if (sheetLink) sheetLink.hidden = normalized !== 'stocks';
+    if (dialogTitle) dialogTitle.textContent = normalized === 'time' ? text.titleTime : text.titleStocks;
+  }
+
+  function openModal(mode) {
+    setMode(mode);
     modal.hidden = false;
     document.body.classList.add('modal-open');
     loadStocks();
     setTimeout(() => {
-      const input = list.querySelector('input');
+      const input = form.dataset.settingsCurrentMode === 'time' ? timeInput : list.querySelector('input');
       if (input) input.focus();
     }, 0);
   }
@@ -158,7 +175,9 @@
     document.body.classList.remove('modal-open');
   }
 
-  button.addEventListener('click', openModal);
+  openButtons.forEach((el) => {
+    el.addEventListener('click', () => openModal(el.dataset.settingsMode));
+  });
   closeButtons.forEach((el) => el.addEventListener('click', closeModal));
   modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
@@ -177,10 +196,11 @@
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const mode = form.dataset.settingsCurrentMode === 'time' ? 'time' : 'stocks';
     const stocks = collectStocks();
     const briefingTime = timeInput && timeInput.value ? timeInput.value : '07:30';
 
-    if (!stocks.length) {
+    if (mode === 'stocks' && !stocks.length) {
       setStatus(text.needStock, 'warn');
       return;
     }
@@ -198,7 +218,7 @@
         body: JSON.stringify({ stocks, briefingTime })
       });
       updateVisibleSettings(stocks, briefingTime);
-      setStatus(text.saved, 'ok');
+      setStatus(mode === 'time' ? text.savedTime : text.savedStocks, 'ok');
     } catch (error) {
       setStatus(text.saveFailed, 'error');
     }

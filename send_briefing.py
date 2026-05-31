@@ -854,7 +854,8 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
       </div>
       <div class="tags" data-stock-tags>{stock_tags}</div>
       <div class="actions">
-        <button type="button" class="primary" data-watchlist-open>주식 종목 설정하기</button>
+        <button type="button" class="primary" data-watchlist-open data-settings-mode="stocks">주식 종목 설정</button>
+        <button type="button" data-watchlist-open data-settings-mode="time">알림 시간 설정</button>
       </div>
     </div>
   </header>
@@ -869,18 +870,23 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
     </section>
   </main>
   <div class="modal" data-watchlist-modal hidden>
-    <form class="dialog" data-watchlist-form>
+    <form class="dialog" data-watchlist-form data-settings-current-mode="stocks">
       <div class="dialog-head">
-        <h2>관심 종목 설정</h2>
+        <h2 data-dialog-title>관심 종목 설정</h2>
         <button type="button" class="icon-button" data-watchlist-close aria-label="닫기">×</button>
       </div>
       <div class="dialog-body">
-        <label class="field-label" for="briefing-time">발송 시간</label>
-        <div class="time-field">
-          <input id="briefing-time" type="time" data-briefing-time value="07:30">
+        <div data-time-panel hidden>
+          <label class="field-label" for="briefing-time">발송 시간</label>
+          <div class="time-field">
+            <input id="briefing-time" type="time" data-briefing-time value="07:30">
+          </div>
         </div>
-        <div data-watchlist-list></div>
-        <button type="button" data-watchlist-add>+ 종목 추가</button>
+        <div data-stocks-panel>
+          <label class="field-label">관심 종목</label>
+          <div data-watchlist-list></div>
+          <button type="button" data-watchlist-add>+ 종목 추가</button>
+        </div>
         <p class="status" data-watchlist-status></p>
       </div>
       <div class="dialog-foot">
