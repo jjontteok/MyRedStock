@@ -40,6 +40,8 @@ function doGet(e) {
       hasKakaoRefreshToken: Boolean(props.getProperty('KAKAO_REFRESH_TOKEN')),
       triggerCount,
       lastSentKey: props.getProperty('LAST_SENT_KEY') || '',
+      lastCheckedAt: props.getProperty('LAST_CHECKED_AT') || '',
+      lastError: props.getProperty('LAST_ERROR') || '',
     },
   });
   if (callback) {
@@ -86,19 +88,26 @@ function setupRedStockTrigger() {
 }
 
 function checkAndSendKakao() {
-  const now = new Date();
-  const date = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd');
-  const currentTime = Utilities.formatDate(now, 'Asia/Seoul', 'HH:mm');
-  const targetTime = getBriefingTime_();
-
-  if (!isWithinSendWindow_(currentTime, targetTime, 30)) return;
-
-  const sentKey = `${date}-${targetTime}`;
   const props = PropertiesService.getScriptProperties();
-  if (props.getProperty('LAST_SENT_KEY') === sentKey) return;
+  props.setProperty('LAST_CHECKED_AT', Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss'));
+  try {
+    const now = new Date();
+    const date = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd');
+    const currentTime = Utilities.formatDate(now, 'Asia/Seoul', 'HH:mm');
+    const targetTime = getBriefingTime_();
 
-  sendKakaoBriefingLink_(date, targetTime);
-  props.setProperty('LAST_SENT_KEY', sentKey);
+    if (!isWithinSendWindow_(currentTime, targetTime, 30)) return;
+
+    const sentKey = `${date}-${targetTime}`;
+    if (props.getProperty('LAST_SENT_KEY') === sentKey) return;
+
+    sendKakaoBriefingLink_(date, targetTime);
+    props.setProperty('LAST_SENT_KEY', sentKey);
+    props.deleteProperty('LAST_ERROR');
+  } catch (error) {
+    props.setProperty('LAST_ERROR', `${error && error.message ? error.message : error}`);
+    throw error;
+  }
 }
 
 function testSendKakaoNow() {
