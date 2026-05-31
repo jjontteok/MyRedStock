@@ -83,7 +83,7 @@ function setupRedStockTrigger() {
 
   ScriptApp.newTrigger('checkAndSendKakao')
     .timeBased()
-    .everyMinutes(10)
+    .everyMinutes(1)
     .create();
 }
 
