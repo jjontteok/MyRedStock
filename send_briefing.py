@@ -73,6 +73,12 @@ def selected_time(settings: dict) -> str:
     return "07:30"
 
 
+def sent_marker_path(settings: dict, now: datetime | None = None) -> Path:
+    current = now or kst_now()
+    send_time = selected_time(settings).replace(":", "")
+    return Path("docs") / ".sent" / f"{current.strftime('%Y-%m-%d')}-{send_time}.txt"
+
+
 def should_send_now(settings: dict) -> bool:
     if os.getenv("GITHUB_EVENT_NAME") != "schedule":
         return True
@@ -83,7 +89,7 @@ def should_send_now(settings: dict) -> bool:
     if not 0 <= delta_minutes < 30:
         print(f"Not send time yet. now={now.strftime('%H:%M')} target={hour:02d}:{minute:02d}")
         return False
-    sent_marker = Path("docs") / ".sent" / f"{now.strftime('%Y-%m-%d')}.txt"
+    sent_marker = sent_marker_path(settings, now)
     if sent_marker.exists():
         print(f"Today's briefing was already sent: {sent_marker}")
         return False
@@ -378,7 +384,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
 """
 
 
-def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> None:
+def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str, settings: dict | None = None) -> None:
     docs = Path("docs")
     briefings = docs / "briefings"
     briefings.mkdir(parents=True, exist_ok=True)
@@ -388,7 +394,8 @@ def write_briefing_page(stocks: list[str], articles: list[dict], briefing: str) 
     (briefings / f"{today}.html").write_text(page, encoding="utf-8")
     sent_dir = docs / ".sent"
     sent_dir.mkdir(parents=True, exist_ok=True)
-    (sent_dir / f"{today}.txt").write_text(datetime.now().isoformat(), encoding="utf-8")
+    marker = sent_marker_path(settings or {}, kst_now())
+    marker.write_text(datetime.now().isoformat(), encoding="utf-8")
 
 
 def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str) -> str:
@@ -795,7 +802,7 @@ def main() -> int:
         return 0
 
     briefing = summarize(stocks, articles)
-    write_briefing_page(stocks, articles, briefing)
+    write_briefing_page(stocks, articles, briefing, settings)
     url = dated_briefing_url()
     stock_text = ", ".join(stocks[:4])
     send_kakao_message(

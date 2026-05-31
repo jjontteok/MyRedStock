@@ -4,6 +4,8 @@ on:
   schedule:
     # Wake up often; send_briefing.py checks the user-selected KST send time.
     - cron: "*/10 * * * *"
+    # Extra offsets help when GitHub drops or delays crowded 10-minute boundaries.
+    - cron: "3-59/10 * * * *"
   workflow_dispatch:
 
 permissions:
