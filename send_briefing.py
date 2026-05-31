@@ -99,7 +99,6 @@ def should_send_now(settings: dict) -> bool:
 def fetch_news(stocks: list[str]) -> list[dict]:
     import feedparser
 
-    fetched_at = kst_now().strftime("%H:%M")
     articles: list[dict] = []
     seen: set[str] = set()
     for stock in stocks:
@@ -119,7 +118,6 @@ def fetch_news(stocks: list[str]) -> list[dict]:
                     "link": link,
                     "published": getattr(entry, "published", ""),
                     "published_display": format_published_time(entry),
-                    "fetched_at": fetched_at,
                     "source": getattr(getattr(entry, "source", None), "title", ""),
                 }
             )
@@ -265,7 +263,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
           <span class="ticker">{html.escape(article["stock"])}</span>
           <span class="news-main">
             <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
-            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 발췌 · {html.escape(article.get("fetched_at", ""))} 확인</span>
+            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 뉴스</span>
           </span>
         </li>
         """
@@ -526,7 +524,7 @@ def render_briefing_page(stocks: list[str], articles: list[dict], briefing: str)
           <span class="ticker">{html.escape(article["stock"])}</span>
           <span class="news-main">
             <a href="{html.escape(article["link"])}" target="_blank" rel="noreferrer">{html.escape(article["title"])}</a>
-            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 발췌 · {html.escape(article.get("fetched_at", ""))} 확인</span>
+            <span class="news-time">{html.escape(article.get("published_display") or article.get("published", ""))} 뉴스</span>
           </span>
         </li>
         """
