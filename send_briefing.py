@@ -120,6 +120,21 @@ def fetch_news(stocks: list[str]) -> list[dict]:
 def summarize(stocks: list[str], articles: list[dict]) -> str:
     from openai import OpenAI
 
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        grouped: dict[str, list[dict]] = {stock: [] for stock in stocks}
+        for article in articles:
+            grouped.setdefault(article["stock"], []).append(article)
+        lines = ["RedStock 오늘 브리핑"]
+        for stock in stocks:
+            stock_articles = grouped.get(stock, [])[:2]
+            if not stock_articles:
+                lines.append(f"{stock}: 확인된 주요 뉴스가 적습니다.")
+                continue
+            titles = " / ".join(article["title"] for article in stock_articles)
+            lines.append(f"{stock}: {titles}")
+        lines.append("체크: AI/HBM, 실적, 환율, 수급 변화를 함께 확인하세요.")
+        return "\n".join(lines)
+
     model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
     client = OpenAI(api_key=env("OPENAI_API_KEY"))
     today = datetime.now().strftime("%Y-%m-%d")
