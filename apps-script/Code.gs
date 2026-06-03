@@ -170,7 +170,7 @@ function sendKakaoBriefingLink_(date, targetTime) {
     muteHttpExceptions: false,
   });
   const token = JSON.parse(tokenResponse.getContentText()).access_token;
-  const url = `${BRIEFING_PAGE_URL}briefings/${date}.html?v=${Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMddHHmmss')}`;
+  const url = `${BRIEFING_PAGE_URL}?v=${Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyyMMddHHmmss')}`;
   const template = {
     object_type: 'text',
     text: `RedStock 브리핑 알림\n설정 시간: ${targetTime}\n${url}`,
