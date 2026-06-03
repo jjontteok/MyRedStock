@@ -164,9 +164,7 @@ def summarize(stocks: list[str], articles: list[dict]) -> str:
                 "content": (
                     "You write concise Korean morning briefings for an individual investor. "
                     "Use only the provided news list. Do not invent facts. "
-                    "Give a clear news-based opinion for each stock using exactly one of 매수, 보유, 매도, 관망. "
-                    "Add 1-2 short reasons and one risk or invalidation condition for each opinion. "
-                    "Mention when news coverage is thin and do not present this as personalized investment advice."
+                    "Mention when news coverage is thin."
                 ),
             },
             {
@@ -180,7 +178,6 @@ def summarize(stocks: list[str], articles: list[dict]) -> str:
                             "headline",
                             "market_summary",
                             "stock_sections",
-                            "opinion_per_stock",
                             "positive_points",
                             "risk_points",
                             "watch_today",
